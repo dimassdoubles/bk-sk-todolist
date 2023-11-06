@@ -14,6 +14,10 @@ class _TodoAppState extends State<TodoApp> {
   final _searchController = TextEditingController();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
+
+  final _editTitleController = TextEditingController();
+  final _editDescController = TextEditingController();
+
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Todo> _todos = [];
 
@@ -28,6 +32,8 @@ class _TodoAppState extends State<TodoApp> {
     _searchController.dispose();
     _titleController.dispose();
     _descController.dispose();
+    _editDescController.dispose();
+    _editTitleController.dispose();
     super.dispose();
   }
 
@@ -63,27 +69,71 @@ class _TodoAppState extends State<TodoApp> {
               itemCount: _todos.length,
               itemBuilder: (context, index) {
                 var todo = _todos[index];
-                return ListTile(
-                  leading: todo.completed
-                      ? IconButton(
-                          icon: const Icon(Icons.check_circle),
-                          onPressed: () {
-                            _check(todo);
-                          },
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.radio_button_unchecked),
-                          onPressed: () {
-                            _check(todo);
-                          },
+                return GestureDetector(
+                  onTap: () {
+                    _editTitleController.text = todo.title;
+                    _editDescController.text = todo.description;
+
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Edit Todo'),
+                        content: SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: _editTitleController,
+                                decoration: const InputDecoration(
+                                    hintText: 'Judul todo'),
+                              ),
+                              TextField(
+                                controller: _editDescController,
+                                decoration: const InputDecoration(
+                                    hintText: 'Deskripsi todo'),
+                              ),
+                            ],
+                          ),
                         ),
-                  title: Text(todo.title),
-                  subtitle: Text(todo.description),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      _removeTodo(todo);
-                    },
+                        actions: [
+                          TextButton(
+                            child: const Text('Batalkan'),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _editTodo(todo);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Edit'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    leading: todo.completed
+                        ? IconButton(
+                            icon: const Icon(Icons.check_circle),
+                            onPressed: () {
+                              _check(todo);
+                            },
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.radio_button_unchecked),
+                            onPressed: () {
+                              _check(todo);
+                            },
+                          ),
+                    title: Text(todo.title),
+                    subtitle: Text(todo.description),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _removeTodo(todo);
+                      },
+                    ),
                   ),
                 );
               },
@@ -137,6 +187,20 @@ class _TodoAppState extends State<TodoApp> {
 
   void _removeTodo(Todo todo) {
     _dbHelper.deleteTodo(todo.id);
+    _getAllTodo();
+  }
+
+  void _editTodo(Todo edited) {
+    _dbHelper.updateTodo(Todo(
+      id: edited.id,
+      title: _editTitleController.text,
+      description: _editDescController.text,
+      completed: edited.completed,
+    ));
+
+    _editTitleController.text = "";
+    _editDescController.text = "";
+
     _getAllTodo();
   }
 
