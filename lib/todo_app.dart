@@ -57,6 +57,7 @@ class _TodoAppState extends State<TodoApp> {
         title: const Text('Todo List'),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MySearchBar(
             controller: _searchController,
@@ -64,11 +65,121 @@ class _TodoAppState extends State<TodoApp> {
               _search();
             },
           ),
+          const SizedBox(
+            height: 32,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: Text(
+              "Todo",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ),
           Expanded(
+            flex: 1,
             child: ListView.builder(
               itemCount: _todos.length,
               itemBuilder: (context, index) {
                 var todo = _todos[index];
+                if (todo.completed) {
+                  return const SizedBox.shrink();
+                }
+                return GestureDetector(
+                  onTap: () {
+                    _editTitleController.text = todo.title;
+                    _editDescController.text = todo.description;
+
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Edit Todo'),
+                        content: SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: _editTitleController,
+                                decoration: const InputDecoration(
+                                    hintText: 'Judul todo'),
+                              ),
+                              TextField(
+                                controller: _editDescController,
+                                decoration: const InputDecoration(
+                                    hintText: 'Deskripsi todo'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: const Text('Batalkan'),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _editTodo(todo);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Edit'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    leading: todo.completed
+                        ? IconButton(
+                            icon: const Icon(Icons.check_circle),
+                            onPressed: () {
+                              _check(todo);
+                            },
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.radio_button_unchecked),
+                            onPressed: () {
+                              _check(todo);
+                            },
+                          ),
+                    title: Text(todo.title),
+                    subtitle: Text(todo.description),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _removeTodo(todo);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: Text(
+              "Done",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: ListView.builder(
+              itemCount: _todos.length,
+              itemBuilder: (context, index) {
+                var todo = _todos[index];
+                if (!todo.completed) {
+                  return const SizedBox.shrink();
+                }
                 return GestureDetector(
                   onTap: () {
                     _editTitleController.text = todo.title;
